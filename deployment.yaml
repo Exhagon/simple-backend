@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nodeapp
+  labels:
+    app: nodeapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodeapp
+  template:
+    metadata:
+      labels:
+        app: nodeapp
+    spec:
+      serviceAccountName: nodeapp-identity-sa
+      containers:
+        - name: nodeapp
+          image: tuusuarioacr.azurecr.io/nodeapp:latest #reemplazar
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: kv-secrets
+          volumeMounts:
+            - name: secrets-store
+              mountPath: "/mnt/secrets"
+              readOnly: true
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "azure-kv-nodeapp"
